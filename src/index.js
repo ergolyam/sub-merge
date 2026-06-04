@@ -104,10 +104,29 @@ function escapeHtmlAttribute(text) {
     return escapeHtml(text).replace(/"/g, "&quot;");
 }
 
+function getLinkName(link) {
+    const hash = link.indexOf("#");
+
+    if (hash === -1 || hash === link.length - 1) {
+        return "";
+    }
+
+    const name = link.slice(hash + 1);
+
+    try {
+        return decodeURIComponent(name);
+    } catch (e) {
+        return name;
+    }
+}
+
 function renderLinkRow(link) {
+    const name = getLinkName(link);
+    const nameHtml = name === "" ? "" : '<div class="link-name">' + escapeHtml(name) + "</div>";
+
     return '<div class="link-row">' +
         '<button class="copy-link" type="button" data-link="' + escapeHtmlAttribute(link) + '">Copy</button>' +
-        "<code>" + escapeHtml(link) + "</code>" +
+        '<div class="link-text">' + nameHtml + "<code>" + escapeHtml(link) + "</code></div>" +
         "</div>";
 }
 
