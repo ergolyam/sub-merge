@@ -124,9 +124,11 @@ function renderLinkRow(link) {
     const name = getLinkName(link);
     const nameHtml = name === "" ? "" : '<div class="link-name">' + escapeHtml(name) + "</div>";
 
+    const linkAttribute = escapeHtmlAttribute(link);
+
     return '<div class="link-row">' +
-        '<button class="copy-link" type="button" data-link="' + escapeHtmlAttribute(link) + '">Copy</button>' +
-        '<div class="link-text">' + nameHtml + "<code>" + escapeHtml(link) + "</code></div>" +
+        '<button class="copy-link" type="button" data-link="' + linkAttribute + '">Copy</button>' +
+        '<div class="link-text">' + nameHtml + '<code title="' + linkAttribute + '">' + escapeHtml(link) + "</code></div>" +
         "</div>";
 }
 

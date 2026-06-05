@@ -50,8 +50,11 @@ body {
     font-weight: 700;
 }
 
-code {
+.link-text code {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
     color: #555;
-    white-space: pre-wrap;
-    word-break: break-all;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
