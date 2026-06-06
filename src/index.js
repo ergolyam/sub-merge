@@ -132,13 +132,14 @@ function renderLinkRow(link) {
         "</div>";
 }
 
-function renderBrowserSubscription(plain) {
+function renderBrowserSubscription(plain, upstreamStatus) {
     const links = extractSubscriptionLinks(plain);
 
     return SUBSCRIPTION_TEMPLATE
         .replace("{{SUBSCRIPTION_STYLE}}", SUBSCRIPTION_STYLE)
         .replace("{{SUBSCRIPTION_SCRIPT}}", SUBSCRIPTION_SCRIPT)
         .replace("{{LINK_COUNT}}", String(links.length))
+        .replace("{{UPSTREAM_STATUS}}", upstreamStatus)
         .replace("{{LINK_ROWS}}", links.map(renderLinkRow).join("\n"));
 }
 
@@ -180,19 +181,30 @@ async function merge(r) {
         return;
     }
 
-    const texts = await Promise.all(upstreams.map(async function (baseUrl) {
+    const results = await Promise.all(upstreams.map(async function (baseUrl) {
         try {
-            return await fetchSubscription(baseUrl, subId);
+            return {
+                ok: true,
+                text: await fetchSubscription(baseUrl, subId),
+            };
         } catch (e) {
-            return "";
+            return {
+                ok: false,
+                text: "",
+            };
         }
     }));
+
+    const successfulUpstreams = results.filter(function (result) {
+        return result.ok;
+    }).length;
+    const upstreamStatus = successfulUpstreams + "/" + upstreams.length;
 
     const links = [];
     const seen = Object.create(null);
 
-    for (let i = 0; i < texts.length; i++) {
-        const extracted = extractSubscriptionLinks(texts[i]);
+    for (let i = 0; i < results.length; i++) {
+        const extracted = extractSubscriptionLinks(results[i].text);
         for (let j = 0; j < extracted.length; j++) {
             const link = extracted[j];
             if (!seen[link]) {
@@ -213,7 +225,7 @@ async function merge(r) {
 
     if (isBrowserRequest(r)) {
         r.headersOut["Content-Type"] = "text/html; charset=utf-8";
-        r.return(200, renderBrowserSubscription(plain));
+        r.return(200, renderBrowserSubscription(plain, upstreamStatus));
         return;
     }
 
