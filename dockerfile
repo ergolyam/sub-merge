@@ -8,6 +8,4 @@ COPY --chown=appuser:appuser . .
 
 USER appuser
 
-ENV PORT=3000
-
 CMD ["node", "server.js"]

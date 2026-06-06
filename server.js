@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 
 import { createApp } from "./src/server/app.js";
 
-const port = Number.parseInt(process.env.PORT || "8080", 10);
+const port = Number.parseInt(process.env.PORT || "3000", 10);
 const host = process.env.HOST || "0.0.0.0";
 
 if (!Number.isInteger(port) || port < 1 || port > 65535) {
