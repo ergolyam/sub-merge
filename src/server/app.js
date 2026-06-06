@@ -31,9 +31,7 @@ export function createApp(options = {}) {
         try {
             await routeRequest(request, response, { env, fetchImpl, fetchTimeoutMs });
         } catch (error) {
-            send(response, request, 500, "Internal Server Error\n", {
-                "Content-Type": "text/plain; charset=utf-8",
-            });
+            returnNotFound(response, request, "Unhandled request error", error);
         }
     };
 }
@@ -56,28 +54,27 @@ async function handleMerge(request, response, pathname, options) {
     const subId = getSubId(pathname);
 
     if (subId === null) {
-        returnNotFound(response, request);
+        returnNotFound(response, request, `Invalid subscription path: ${pathname}`);
         return;
     }
 
     const upstreams = getUpstreams(options.env);
 
     if (upstreams.length === 0) {
-        send(response, request, 500, "UPSTREAMS is empty\n", {
-            "Content-Type": "text/plain; charset=utf-8",
-        });
+        returnNotFound(response, request, "UPSTREAMS is empty");
         return;
     }
 
     const merged = await mergeSubscriptions(subId, upstreams, {
         fetchImpl: options.fetchImpl,
+        logger: logError,
         timeoutMs: options.fetchTimeoutMs,
     });
 
     const plain = merged.links.join("\n") + "\n";
 
     if (extractSubscriptionLinks(plain).length === 0) {
-        returnNotFound(response, request);
+        returnNotFound(response, request, `No usable links for subscription id: ${subId}`);
         return;
     }
 
@@ -120,8 +117,26 @@ function getAsset(pathname) {
     return ASSETS[name] || null;
 }
 
-function returnNotFound(response, request) {
+function returnNotFound(response, request, message, error) {
+    if (message) {
+        logRequestError(request, message, error);
+    }
+
     send(response, request, 404, "");
+}
+
+function logRequestError(request, message, error) {
+    const requestLine = `${request.method || "GET"} ${request.url || "/"}`;
+    logError(`${message} (${requestLine})`, error);
+}
+
+function logError(message, error) {
+    if (error) {
+        console.error(`[sub-merge] ${message}: ${error.message || error}`);
+        return;
+    }
+
+    console.error(`[sub-merge] ${message}`);
 }
 
 function send(response, request, status, body, headers = {}) {

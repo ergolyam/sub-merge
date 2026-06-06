@@ -6,6 +6,7 @@ export async function mergeSubscriptions(subId, upstreams, options = {}) {
                 text: await fetchSubscription(baseUrl, subId, options),
             };
         } catch (error) {
+            logUpstreamError(options.logger, baseUrl, subId, error);
             return {
                 ok: false,
                 text: "",
@@ -30,6 +31,14 @@ export async function mergeSubscriptions(subId, upstreams, options = {}) {
         links,
         upstreamStatus: `${successfulUpstreams}/${upstreams.length}`,
     };
+}
+
+function logUpstreamError(logger, baseUrl, subId, error) {
+    if (typeof logger !== "function") {
+        return;
+    }
+
+    logger(`Upstream ${baseUrl} failed for subscription id ${subId}`, error);
 }
 
 export async function fetchSubscription(baseUrl, subId, options = {}) {
