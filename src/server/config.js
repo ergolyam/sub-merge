@@ -5,6 +5,16 @@ export function getUpstreams(env = process.env) {
         .filter(Boolean);
 }
 
+export function getFetchTimeoutMs(env = process.env, defaultTimeoutMs) {
+    const seconds = Number(env.TIMEOUT);
+
+    if (!Number.isFinite(seconds) || seconds <= 0) {
+        return defaultTimeoutMs;
+    }
+
+    return Math.round(seconds * 1000);
+}
+
 function parseUpstream(value) {
     const trimmed = value.trim();
 

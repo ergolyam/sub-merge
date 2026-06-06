@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import { getUpstreams } from "./config.js";
+import { getFetchTimeoutMs, getUpstreams } from "./config.js";
 import { isBrowserRequest } from "./headers.js";
 import { renderBrowserSubscription } from "./render.js";
 import { DEFAULT_FETCH_TIMEOUT_MS, mergeSubscriptions } from "./subscription.js";
@@ -19,7 +19,7 @@ const ASSETS = {
 export function createApp(options = {}) {
     const env = options.env || process.env;
     const fetchImpl = options.fetchImpl || globalThis.fetch;
-    const fetchTimeoutMs = options.fetchTimeoutMs || DEFAULT_FETCH_TIMEOUT_MS;
+    const fetchTimeoutMs = options.fetchTimeoutMs || getFetchTimeoutMs(env, DEFAULT_FETCH_TIMEOUT_MS);
 
     if (typeof fetchImpl !== "function") {
         throw new Error("A fetch implementation is required");
