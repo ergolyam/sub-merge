@@ -46,7 +46,39 @@ function logUpstreamError(logger, baseUrl, subId, error) {
 export async function fetchSubscription(baseUrl, subId, options = {}) {
     const fetchImpl = options.fetchImpl || globalThis.fetch;
     const timeoutMs = options.timeoutMs || DEFAULT_FETCH_TIMEOUT_MS;
+    const retryAttempts = getRetryAttempts(options.retryAttempts);
+    const attemptTimeoutMs = Math.max(1, Math.floor(timeoutMs / retryAttempts));
     const url = `${baseUrl.replace(/\/+$/, "")}/sub/${encodeURIComponent(subId)}`;
+
+    let lastError;
+
+    for (let attempt = 0; attempt < retryAttempts; attempt += 1) {
+        try {
+            return await fetchSubscriptionAttempt(baseUrl, url, fetchImpl, attemptTimeoutMs);
+        } catch (error) {
+            lastError = error;
+
+            if (attempt < retryAttempts - 1) {
+                logUpstreamReconnect(options.logger, baseUrl, subId, attempt + 2, retryAttempts, error);
+            }
+        }
+    }
+
+    throw lastError;
+}
+
+function logUpstreamReconnect(logger, baseUrl, subId, nextAttempt, retryAttempts, error) {
+    if (typeof logger !== "function") {
+        return;
+    }
+
+    logger(
+        `Reconnecting to upstream ${baseUrl} for subscription id ${subId}, attempt ${nextAttempt}/${retryAttempts}`,
+        error,
+    );
+}
+
+async function fetchSubscriptionAttempt(baseUrl, url, fetchImpl, timeoutMs) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -68,6 +100,10 @@ export async function fetchSubscription(baseUrl, subId, options = {}) {
     } finally {
         clearTimeout(timeout);
     }
+}
+
+function getRetryAttempts(value) {
+    return Number.isInteger(value) && value > 1 ? value : 1;
 }
 
 export function maybeDecodeSubscription(body) {

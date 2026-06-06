@@ -81,3 +81,4 @@ docker pull ghcr.io/ergolyam/sub-merge:latest
 | `PORT` | `3000` | HTTP listen port |
 | `HOST` | `0.0.0.0` | HTTP listen address |
 | `TIMEOUT` | `5` | Upstream fetch timeout in seconds |
+| `RETRIES` | `1` | Total upstream fetch attempts inside `TIMEOUT`. Unset keeps one attempt with no retries |

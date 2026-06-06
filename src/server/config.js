@@ -15,6 +15,16 @@ export function getFetchTimeoutMs(env = process.env, defaultTimeoutMs) {
     return Math.round(seconds * 1000);
 }
 
+export function getFetchRetryAttempts(env = process.env, defaultRetryAttempts = 1) {
+    const attempts = Number(env.RETRIES);
+
+    if (!Number.isInteger(attempts) || attempts <= 1) {
+        return defaultRetryAttempts;
+    }
+
+    return attempts;
+}
+
 function parseUpstream(value) {
     const trimmed = value.trim();
 

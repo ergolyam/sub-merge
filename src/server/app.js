@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import { getFetchTimeoutMs, getUpstreams } from "./config.js";
+import { getFetchRetryAttempts, getFetchTimeoutMs, getUpstreams } from "./config.js";
 import { isBrowserRequest } from "./headers.js";
 import { renderBrowserSubscription } from "./render.js";
 import { DEFAULT_FETCH_TIMEOUT_MS, mergeSubscriptions } from "./subscription.js";
@@ -20,6 +20,7 @@ export function createApp(options = {}) {
     const env = options.env || process.env;
     const fetchImpl = options.fetchImpl || globalThis.fetch;
     const fetchTimeoutMs = options.fetchTimeoutMs || getFetchTimeoutMs(env, DEFAULT_FETCH_TIMEOUT_MS);
+    const fetchRetryAttempts = options.fetchRetryAttempts || getFetchRetryAttempts(env);
 
     if (typeof fetchImpl !== "function") {
         throw new Error("A fetch implementation is required");
@@ -27,7 +28,7 @@ export function createApp(options = {}) {
 
     return async function app(request, response) {
         try {
-            await routeRequest(request, response, { env, fetchImpl, fetchTimeoutMs });
+            await routeRequest(request, response, { env, fetchImpl, fetchTimeoutMs, fetchRetryAttempts });
         } catch (error) {
             returnNotFound(response, request, "Unhandled request error", error);
         }
@@ -73,6 +74,7 @@ async function handleMerge(request, response, pathSegments, options) {
     const merged = await mergeSubscriptions(subId, upstreams, {
         fetchImpl: options.fetchImpl,
         logger: logError,
+        retryAttempts: options.fetchRetryAttempts,
         timeoutMs: options.fetchTimeoutMs,
     });
 
