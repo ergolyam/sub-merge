@@ -36,7 +36,8 @@ export function createApp(options = {}) {
 
 async function routeRequest(request, response, options) {
     const url = new URL(request.url || "/", "http://localhost");
-    const asset = getAsset(url.pathname);
+    const pathSegments = getPathSegments(url.pathname);
+    const asset = getAsset(pathSegments);
 
     if (asset && (request.method === "GET" || request.method === "HEAD")) {
         send(response, request, 200, asset.body, {
@@ -45,14 +46,14 @@ async function routeRequest(request, response, options) {
         return;
     }
 
-    await handleMerge(request, response, url.pathname, options);
+    await handleMerge(request, response, pathSegments, options);
 }
 
-async function handleMerge(request, response, pathname, options) {
-    const subId = getSubId(pathname);
+async function handleMerge(request, response, pathSegments, options) {
+    const subId = getSubId(pathSegments);
 
     if (subId === null) {
-        returnNotFound(response, request, `Invalid subscription path: ${pathname}`);
+        returnNotFound(response, request, "Invalid subscription path");
         return;
     }
 
@@ -95,14 +96,16 @@ async function handleMerge(request, response, pathname, options) {
     });
 }
 
-function getSubId(pathname) {
-    const segments = pathname.split("/").filter(Boolean);
+function getPathSegments(pathname) {
+    return pathname.split("/").filter(Boolean);
+}
 
-    if (segments.length === 0) {
+function getSubId(pathSegments) {
+    if (pathSegments.length !== 1) {
         return null;
     }
 
-    return decodePathSegment(segments[segments.length - 1]);
+    return decodePathSegment(pathSegments[0]);
 }
 
 function decodePathSegment(segment) {
@@ -114,13 +117,12 @@ function decodePathSegment(segment) {
     }
 }
 
-function getAsset(pathname) {
-    if (!pathname.includes("/assets/")) {
+function getAsset(pathSegments) {
+    if (pathSegments.length !== 2 || pathSegments[0] !== "assets") {
         return null;
     }
 
-    const name = pathname.split("/").pop();
-    return ASSETS[name] || null;
+    return ASSETS[pathSegments[1]] || null;
 }
 
 function returnNotFound(response, request, message, error) {
