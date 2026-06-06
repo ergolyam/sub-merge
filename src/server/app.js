@@ -37,6 +37,12 @@ export function createApp(options = {}) {
 async function routeRequest(request, response, options) {
     const url = new URL(request.url || "/", "http://localhost");
     const pathSegments = getPathSegments(url.pathname);
+
+    if (isFavicon(pathSegments)) {
+        returnNotFound(response, request);
+        return;
+    }
+
     const asset = getAsset(pathSegments);
 
     if (asset && (request.method === "GET" || request.method === "HEAD")) {
@@ -106,6 +112,10 @@ function getSubId(pathSegments) {
     }
 
     return decodePathSegment(pathSegments[0]);
+}
+
+function isFavicon(pathSegments) {
+    return pathSegments.length === 1 && pathSegments[0] === "favicon.ico";
 }
 
 function decodePathSegment(segment) {
