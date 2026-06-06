@@ -3,9 +3,7 @@ import { readFileSync } from "node:fs";
 import { getUpstreams } from "./config.js";
 import { isBrowserRequest } from "./headers.js";
 import { renderBrowserSubscription } from "./render.js";
-import { extractSubscriptionLinks, mergeSubscriptions } from "./subscription.js";
-
-const DEFAULT_FETCH_TIMEOUT_MS = 5000;
+import { DEFAULT_FETCH_TIMEOUT_MS, mergeSubscriptions } from "./subscription.js";
 
 const ASSETS = {
     "client.js": {
@@ -71,12 +69,12 @@ async function handleMerge(request, response, pathname, options) {
         timeoutMs: options.fetchTimeoutMs,
     });
 
-    const plain = merged.links.join("\n") + "\n";
-
-    if (extractSubscriptionLinks(plain).length === 0) {
+    if (merged.links.length === 0) {
         returnNotFound(response, request, `No usable links for subscription id: ${subId}`);
         return;
     }
+
+    const plain = merged.links.join("\n") + "\n";
 
     const commonHeaders = {
         "Cache-Control": "no-store",
@@ -104,8 +102,16 @@ function getSubId(pathname) {
         return null;
     }
 
-    const subId = segments[segments.length - 1];
-    return /^[A-Za-z0-9_-]{1,256}$/.test(subId) ? subId : null;
+    return decodePathSegment(segments[segments.length - 1]);
+}
+
+function decodePathSegment(segment) {
+    try {
+        const decoded = decodeURIComponent(segment);
+        return decoded.trim() === "" ? null : decoded;
+    } catch (error) {
+        return segment.trim() === "" ? null : segment;
+    }
 }
 
 function getAsset(pathname) {

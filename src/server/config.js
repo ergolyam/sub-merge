@@ -1,6 +1,29 @@
 export function getUpstreams(env = process.env) {
     return (env.UPSTREAMS || "")
         .split(",")
-        .map((item) => item.trim())
-        .filter((item) => /^https?:\/\/[A-Za-z0-9.-]+(?::[0-9]+)?$/.test(item));
+        .map(parseUpstream)
+        .filter(Boolean);
+}
+
+function parseUpstream(value) {
+    const trimmed = value.trim();
+
+    if (trimmed === "") {
+        return null;
+    }
+
+    try {
+        const url = new URL(trimmed);
+
+        if (url.protocol !== "http:" && url.protocol !== "https:") {
+            return null;
+        }
+
+        url.hash = "";
+        url.search = "";
+
+        return url.href.replace(/\/+$/, "");
+    } catch (error) {
+        return null;
+    }
 }

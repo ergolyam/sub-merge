@@ -1,3 +1,5 @@
+export const DEFAULT_FETCH_TIMEOUT_MS = 5000;
+
 export async function mergeSubscriptions(subId, upstreams, options = {}) {
     const results = await Promise.all(upstreams.map(async (baseUrl) => {
         try {
@@ -43,7 +45,7 @@ function logUpstreamError(logger, baseUrl, subId, error) {
 
 export async function fetchSubscription(baseUrl, subId, options = {}) {
     const fetchImpl = options.fetchImpl || globalThis.fetch;
-    const timeoutMs = options.timeoutMs || 5000;
+    const timeoutMs = options.timeoutMs || DEFAULT_FETCH_TIMEOUT_MS;
     const url = `${baseUrl.replace(/\/+$/, "")}/sub/${encodeURIComponent(subId)}`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
