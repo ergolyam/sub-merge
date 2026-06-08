@@ -1,8 +1,18 @@
 (function () {
-    function done(button, text) {
-        button.textContent = text;
-        setTimeout(function () {
-            button.textContent = "Copy";
+    function done(button, ok) {
+        var stateClass = ok ? "copy-link--copied" : "copy-link--failed";
+        var label = ok ? "Copied" : "Copy failed";
+
+        button.classList.remove("copy-link--copied", "copy-link--failed");
+        void button.offsetWidth;
+        button.classList.add(stateClass);
+        button.setAttribute("aria-label", label);
+        button.setAttribute("title", label);
+        clearTimeout(button.copyTimer);
+        button.copyTimer = setTimeout(function () {
+            button.classList.remove(stateClass);
+            button.setAttribute("aria-label", "Copy link");
+            button.setAttribute("title", "Copy link");
         }, 1600);
     }
 
@@ -22,7 +32,7 @@
         }
 
         document.body.removeChild(area);
-        done(button, ok ? "Copied" : "Select and copy");
+        done(button, ok);
     }
 
     document.addEventListener("click", function (event) {
@@ -36,7 +46,7 @@
 
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(text).then(function () {
-                done(button, "Copied");
+                done(button, true);
             }, function () {
                 fallback(button, text);
             });

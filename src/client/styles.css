@@ -31,14 +31,74 @@ body {
 }
 
 .copy-link {
+    --copy-bg: #2563eb;
     appearance: none;
-    border: 1px solid #2563eb;
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--copy-bg);
     border-radius: 6px;
-    padding: 8px 12px;
-    background: #2563eb;
+    background: var(--copy-bg);
     color: #fff;
     cursor: pointer;
-    font: inherit;
+    transition: filter 120ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.copy-link::before,
+.copy-link::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    box-sizing: border-box;
+    width: 14px;
+    height: 16px;
+    border: 2px solid currentColor;
+    border-radius: 2px;
+}
+
+.copy-link::before {
+    opacity: 0.7;
+    transform: translate(-9px, -10px);
+}
+
+.copy-link::after {
+    background: var(--copy-bg);
+    transform: translate(-5px, -6px);
+}
+
+.copy-link:active {
+    filter: brightness(0.92);
+}
+
+.copy-link--copied,
+.copy-link--failed {
+    animation: copy-flash 260ms ease-out;
+}
+
+.copy-link--copied::before {
+    width: 8px;
+    height: 14px;
+    border-width: 0 2px 2px 0;
+    border-radius: 0;
+    opacity: 1;
+    transform: translate(-4px, -8px) rotate(45deg);
+}
+
+.copy-link--copied::after {
+    opacity: 0;
+}
+
+.copy-link--failed {
+    --copy-bg: #b91c1c;
+}
+
+@keyframes copy-flash {
+    50% {
+        filter: brightness(1.12);
+    }
 }
 
 .link-text {

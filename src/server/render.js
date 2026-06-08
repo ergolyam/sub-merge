@@ -19,7 +19,7 @@ function renderLinkRow(link) {
     const linkAttribute = escapeHtmlAttribute(link);
 
     return '<div class="link-row">' +
-        `<button class="copy-link" type="button" data-link="${linkAttribute}">Copy</button>` +
+        `<button class="copy-link" type="button" data-link="${linkAttribute}" aria-label="Copy link" title="Copy link"></button>` +
         `<div class="link-text">${nameHtml}<code title="${linkAttribute}">${escapeHtml(link)}</code></div>` +
         "</div>";
 }
