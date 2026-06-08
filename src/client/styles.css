@@ -101,6 +101,34 @@ body {
     }
 }
 
+@media (hover: none) and (pointer: coarse) {
+    .copy-link {
+        width: 44px;
+        height: 44px;
+        border-radius: 7px;
+    }
+
+    .copy-link::before,
+    .copy-link::after {
+        width: 17px;
+        height: 20px;
+    }
+
+    .copy-link::before {
+        transform: translate(-11px, -12px);
+    }
+
+    .copy-link::after {
+        transform: translate(-6px, -8px);
+    }
+
+    .copy-link--copied::before {
+        width: 10px;
+        height: 17px;
+        transform: translate(-5px, -10px) rotate(45deg);
+    }
+}
+
 .link-text {
     min-width: 0;
 }
