@@ -43,8 +43,8 @@ docker pull ghcr.io/ergolyam/sub-merge:latest
     - http://localhost:3000/my-subscription-id
 
 - For the request above, sub-merge fetches:
-    - https://sub1.example.com/sub/my-subscription-id
-    - https://sub2.example.com/sub/my-subscription-id
+    - https://node1.example.com/sub/my-subscription-id
+    - https://node2.example.com/sub/my-subscription-id
 
 - The service accepts plain, base64, and base64url upstream subscription responses. It extracts URI lines, removes duplicates, and keeps the original upstream order.
     - Browser requests receive a simple HTML page with one copy button per link.
