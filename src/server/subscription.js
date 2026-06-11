@@ -1,30 +1,37 @@
 export const DEFAULT_FETCH_TIMEOUT_MS = 5000;
 
 export async function mergeSubscriptions(subId, upstreams, options = {}) {
-    const results = await Promise.all(upstreams.map(async (baseUrl) => {
-        try {
-            return {
-                ok: true,
-                text: await fetchSubscription(baseUrl, subId, options),
-            };
-        } catch (error) {
-            logUpstreamError(options.logger, baseUrl, subId, error);
-            return {
-                ok: false,
-                text: "",
-            };
-        }
+    const subscriptionIds = getSubscriptionIds(subId, options.subSuffixes);
+    const upstreamResults = await Promise.all(upstreams.map((baseUrl) => {
+        return Promise.all(subscriptionIds.map(async (subscriptionId) => {
+            try {
+                return {
+                    ok: true,
+                    text: await fetchSubscription(baseUrl, subscriptionId, options),
+                };
+            } catch (error) {
+                logUpstreamError(options.logger, baseUrl, subscriptionId, error);
+                return {
+                    ok: false,
+                    text: "",
+                };
+            }
+        }));
     }));
 
     const links = [];
     const seen = new Set();
-    const successfulUpstreams = results.filter((result) => result.ok).length;
+    const successfulUpstreams = upstreamResults.filter((results) => {
+        return results.some((result) => result.ok);
+    }).length;
 
-    for (const result of results) {
-        for (const link of extractSubscriptionLinks(result.text)) {
-            if (!seen.has(link)) {
-                seen.add(link);
-                links.push(link);
+    for (const results of upstreamResults) {
+        for (const result of results) {
+            for (const link of extractSubscriptionLinks(result.text)) {
+                if (!seen.has(link)) {
+                    seen.add(link);
+                    links.push(link);
+                }
             }
         }
     }
@@ -33,6 +40,13 @@ export async function mergeSubscriptions(subId, upstreams, options = {}) {
         links,
         upstreamStatus: `${successfulUpstreams}/${upstreams.length}`,
     };
+}
+
+function getSubscriptionIds(subId, subSuffixes = []) {
+    return [
+        subId,
+        ...subSuffixes.map((suffix) => `${subId}-${suffix}`),
+    ];
 }
 
 function logUpstreamError(logger, baseUrl, subId, error) {

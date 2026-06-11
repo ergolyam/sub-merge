@@ -46,6 +46,12 @@ docker pull ghcr.io/ergolyam/sub-merge:latest
     - https://node1.example.com/sub/my-subscription-id
     - https://node2.example.com/sub/my-subscription-id
 
+- With `SUB_SUFFIXES=cz,ee`, the same request also fetches:
+    - https://node1.example.com/sub/my-subscription-id-cz
+    - https://node1.example.com/sub/my-subscription-id-ee
+    - https://node2.example.com/sub/my-subscription-id-cz
+    - https://node2.example.com/sub/my-subscription-id-ee
+
 - The service accepts plain, base64, and base64url upstream subscription responses. It extracts URI lines, removes duplicates, and keeps the original upstream order.
     - Browser requests receive a simple HTML page with one copy button per link.
     - Subscription clients receive a base64 encoded merged subscription.
@@ -78,6 +84,7 @@ docker pull ghcr.io/ergolyam/sub-merge:latest
 | Variable | Default | Description |
 |---|---|---|
 | `UPSTREAMS` | - | Required comma-separated upstream base URLs. Only `http` and `https` URLs are used |
+| `SUB_SUFFIXES` | - | Optional comma-separated subscription id suffixes. For `SUB_SUFFIXES=cz,ee`, requests also include `<id>-cz` and `<id>-ee` |
 | `PORT` | `3000` | HTTP listen port |
 | `HOST` | `0.0.0.0` | HTTP listen address |
 | `TIMEOUT` | `5` | Upstream fetch timeout in seconds |

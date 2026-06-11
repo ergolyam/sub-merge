@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import { getFetchRetryAttempts, getFetchTimeoutMs, getUpstreams } from "./config.js";
+import { getFetchRetryAttempts, getFetchTimeoutMs, getSubSuffixes, getUpstreams } from "./config.js";
 import { isBrowserRequest } from "./headers.js";
 import { renderBrowserSubscription } from "./render.js";
 import { DEFAULT_FETCH_TIMEOUT_MS, mergeSubscriptions } from "./subscription.js";
@@ -65,6 +65,7 @@ async function handleMerge(request, response, pathSegments, options) {
     }
 
     const upstreams = getUpstreams(options.env);
+    const subSuffixes = getSubSuffixes(options.env);
 
     if (upstreams.length === 0) {
         returnNotFound(response, request, "UPSTREAMS is empty");
@@ -75,6 +76,7 @@ async function handleMerge(request, response, pathSegments, options) {
         fetchImpl: options.fetchImpl,
         logger: logError,
         retryAttempts: options.fetchRetryAttempts,
+        subSuffixes,
         timeoutMs: options.fetchTimeoutMs,
     });
 

@@ -5,6 +5,13 @@ export function getUpstreams(env = process.env) {
         .filter(Boolean);
 }
 
+export function getSubSuffixes(env = process.env) {
+    return (env.SUB_SUFFIXES || "")
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean);
+}
+
 export function getFetchTimeoutMs(env = process.env, defaultTimeoutMs) {
     const seconds = Number(env.TIMEOUT);
 
