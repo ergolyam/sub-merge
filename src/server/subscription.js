@@ -11,11 +11,11 @@ export async function mergeSubscriptions(subId, upstreams, options = {}) {
                     ok: true,
                     text: await fetchSubscription(baseUrl, subscriptionId, {
                         ...options,
-                        quietNotFound: isOptionalSubscription,
+                        retryAttempts: isOptionalSubscription ? 1 : options.retryAttempts,
                     }),
                 };
             } catch (error) {
-                if (!isQuietNotFound(isOptionalSubscription, error)) {
+                if (!isOptionalSubscription || error.status !== 404) {
                     logUpstreamError(options.logger, baseUrl, subscriptionId, error);
                 }
 
@@ -50,10 +50,6 @@ export async function mergeSubscriptions(subId, upstreams, options = {}) {
     };
 }
 
-function isQuietNotFound(isOptionalSubscription, error) {
-    return isOptionalSubscription && error && error.status === 404;
-}
-
 function getSubscriptionIds(subId, subSuffixes = []) {
     return [
         subId,
@@ -83,10 +79,6 @@ export async function fetchSubscription(baseUrl, subId, options = {}) {
             return await fetchSubscriptionAttempt(baseUrl, url, fetchImpl, attemptTimeoutMs);
         } catch (error) {
             lastError = error;
-
-            if (options.quietNotFound && error && error.status === 404) {
-                throw error;
-            }
 
             if (attempt < retryAttempts - 1) {
                 logUpstreamReconnect(options.logger, baseUrl, subId, attempt + 2, retryAttempts, error);
