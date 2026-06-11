@@ -4,13 +4,21 @@ export async function mergeSubscriptions(subId, upstreams, options = {}) {
     const subscriptionIds = getSubscriptionIds(subId, options.subSuffixes);
     const upstreamResults = await Promise.all(upstreams.map((baseUrl) => {
         return Promise.all(subscriptionIds.map(async (subscriptionId) => {
+            const isOptionalSubscription = subscriptionId !== subId;
+
             try {
                 return {
                     ok: true,
-                    text: await fetchSubscription(baseUrl, subscriptionId, options),
+                    text: await fetchSubscription(baseUrl, subscriptionId, {
+                        ...options,
+                        quietNotFound: isOptionalSubscription,
+                    }),
                 };
             } catch (error) {
-                logUpstreamError(options.logger, baseUrl, subscriptionId, error);
+                if (!isQuietNotFound(isOptionalSubscription, error)) {
+                    logUpstreamError(options.logger, baseUrl, subscriptionId, error);
+                }
+
                 return {
                     ok: false,
                     text: "",
@@ -42,6 +50,10 @@ export async function mergeSubscriptions(subId, upstreams, options = {}) {
     };
 }
 
+function isQuietNotFound(isOptionalSubscription, error) {
+    return isOptionalSubscription && error && error.status === 404;
+}
+
 function getSubscriptionIds(subId, subSuffixes = []) {
     return [
         subId,
@@ -71,6 +83,10 @@ export async function fetchSubscription(baseUrl, subId, options = {}) {
             return await fetchSubscriptionAttempt(baseUrl, url, fetchImpl, attemptTimeoutMs);
         } catch (error) {
             lastError = error;
+
+            if (options.quietNotFound && error && error.status === 404) {
+                throw error;
+            }
 
             if (attempt < retryAttempts - 1) {
                 logUpstreamReconnect(options.logger, baseUrl, subId, attempt + 2, retryAttempts, error);
@@ -107,7 +123,9 @@ async function fetchSubscriptionAttempt(baseUrl, url, fetchImpl, timeoutMs) {
         });
 
         if (response.status < 200 || response.status >= 300) {
-            throw new Error(`${baseUrl} returned HTTP ${response.status}`);
+            const error = new Error(`${baseUrl} returned HTTP ${response.status}`);
+            error.status = response.status;
+            throw error;
         }
 
         return maybeDecodeSubscription(await response.text());
