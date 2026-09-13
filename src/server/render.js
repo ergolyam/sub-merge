@@ -10,25 +10,41 @@ export function renderBrowserSubscription(plain, upstreamStatus) {
     return SUBSCRIPTION_TEMPLATE
         .replace("{{LINK_COUNT}}", String(links.length))
         .replace("{{UPSTREAM_STATUS}}", upstreamStatus)
-        .replace("{{LINK_ROWS}}", links.map(renderLinkRow).join("\n"));
+        .replace("{{LINK_ROWS}}", () => links.map(renderLinkRow).join("\n"));
 }
 
 function renderLinkRow(link) {
-    const name = getLinkName(link);
+    const config = getAmneziaWGConfig(link);
+    const name = getLinkName(link, config);
     const nameHtml = name === "" ? "" : `<div class="link-name">${escapeHtml(name)}</div>`;
     const linkAttribute = escapeHtmlAttribute(link);
+    const copyAttribute = escapeHtmlAttribute(config || link);
+    const copyLabel = config ? "Copy configuration" : "Copy link";
 
     return '<div class="link-row">' +
-        `<button class="copy-link" type="button" data-link="${linkAttribute}" aria-label="Copy link" title="Copy link"></button>` +
+        `<button class="copy-link" type="button" data-link="${copyAttribute}" data-label="${copyLabel}" aria-label="${copyLabel}" title="${copyLabel}"></button>` +
         `<div class="link-text">${nameHtml}<code title="${linkAttribute}">${escapeHtml(link)}</code></div>` +
         "</div>";
 }
 
-function getLinkName(link) {
+function getAmneziaWGConfig(link) {
+    const match = /^vpn:\/\/([A-Za-z0-9_-]+={0,2})(?:#.*)?$/i.exec(link);
+
+    if (!match || match[1].replace(/=+$/, "").length % 4 === 1) {
+        return "";
+    }
+
+    const config = Buffer.from(match[1], "base64url").toString("utf8");
+
+    return /^\[Interface\]\r?$/m.test(config) && /^\[Peer\]\r?$/m.test(config) ? config : "";
+}
+
+function getLinkName(link, config) {
     const hash = link.indexOf("#");
 
     if (hash === -1 || hash === link.length - 1) {
-        return "";
+        const remark = /^#[ \t]*(.*)$/m.exec(config);
+        return remark?.[1].trim() || (config ? "AmneziaWG" : "");
     }
 
     const name = link.slice(hash + 1);
@@ -48,5 +64,5 @@ function escapeHtml(text) {
 }
 
 function escapeHtmlAttribute(text) {
-    return escapeHtml(text).replace(/"/g, "&quot;");
+    return escapeHtml(text).replace(/"/g, "&quot;").replace(/\r/g, "&#13;").replace(/\n/g, "&#10;");
 }

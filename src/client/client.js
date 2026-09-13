@@ -11,8 +11,9 @@
         clearTimeout(button.copyTimer);
         button.copyTimer = setTimeout(function () {
             button.classList.remove(stateClass);
-            button.setAttribute("aria-label", "Copy link");
-            button.setAttribute("title", "Copy link");
+            var copyLabel = button.getAttribute("data-label") || "Copy link";
+            button.setAttribute("aria-label", copyLabel);
+            button.setAttribute("title", copyLabel);
         }, 1600);
     }
 
