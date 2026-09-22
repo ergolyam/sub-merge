@@ -4,17 +4,17 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Subscription</title>
+    <script src="assets/client.js"></script>
     <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
     <div class="toolbar">
         <span class="count">{{LINK_COUNT}} links, {{UPSTREAM_STATUS}} upstreams</span>
+        <button class="theme-toggle" type="button" aria-label="Toggle dark theme" aria-pressed="false" title="Toggle dark theme"></button>
     </div>
 
     <div class="links" spellcheck="false">
 {{LINK_ROWS}}
     </div>
-
-    <script src="assets/client.js" defer></script>
 </body>
 </html>
