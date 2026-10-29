@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Subscription</title>
+    {{/* Original sub-merge client.js, d8266a5; inlined because 3x-ui does not
+         serve files from Sub Theme Directory. Keep this before the stylesheet. */}}
+    <script>
+(function () {
+    var themeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    var theme = null;
+
+    try {
+        theme = localStorage.getItem("theme");
+    } catch (e) {
+    }
+
+    if (theme !== "light" && theme !== "dark") {
+        theme = null;
+    }
+
+    function updateTheme() {
+        var dark = theme === "dark" || (!theme && themeQuery.matches);
+        document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+
+        var button = document.querySelector(".theme-toggle");
+        if (button) {
+            button.setAttribute("aria-pressed", dark ? "true" : "false");
+        }
+    }
+
+    updateTheme();
+    themeQuery.addEventListener("change", updateTheme);
+    document.addEventListener("DOMContentLoaded", updateTheme);
+
+    function done(button, ok) {
+        var stateClass = ok ? "copy-link--copied" : "copy-link--failed";
+        var label = ok ? "Copied" : "Copy failed";
+
+        button.classList.remove("copy-link--copied", "copy-link--failed");
+        void button.offsetWidth;
+        button.classList.add(stateClass);
+        button.setAttribute("aria-label", label);
+        button.setAttribute("title", label);
+        clearTimeout(button.copyTimer);
+        button.copyTimer = setTimeout(function () {
+            button.classList.remove(stateClass);
+            var copyLabel = button.getAttribute("data-label") || "Copy link";
+            button.setAttribute("aria-label", copyLabel);
+            button.setAttribute("title", copyLabel);
+        }, 1600);
+    }
+
+    function fallback(button, text) {
+        var area = document.createElement("textarea");
+        area.value = text;
+        area.setAttribute("readonly", "");
+        area.style.position = "fixed";
+        area.style.left = "-9999px";
+        document.body.appendChild(area);
+        area.select();
+
+        var ok = false;
+        try {
+            ok = document.execCommand("copy");
+        } catch (e) {
+        }
+
+        document.body.removeChild(area);
+        done(button, ok);
+    }
+
+    document.addEventListener("click", function (event) {
+        var button = event.target;
+
+        if (button.classList && button.classList.contains("theme-toggle")) {
+            theme = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+            updateTheme();
+
+            try {
+                localStorage.setItem("theme", theme);
+            } catch (e) {
+            }
+            return;
+        }
+
+        if (!button.classList || !button.classList.contains("copy-link")) {
+            return;
+        }
+
+        var text = button.getAttribute("data-link");
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function () {
+                done(button, true);
+            }, function () {
+                fallback(button, text);
+            });
+            return;
+        }
+
+        fallback(button, text);
+    });
+})();
+    </script>
+    {{/* Original sub-merge styles.css, d8266a5, unchanged. */}}
+    <style>
+:root {
+    color-scheme: light;
+    --page-bg: #f7f7f7;
+    --text-color: #111;
+    --toolbar-bg: #fff;
+    --toolbar-border-color: #d8d8d8;
+    --muted-color: #555;
+    --divider-color: #e1e1e1;
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --page-bg: #171717;
+    --text-color: #eee;
+    --toolbar-bg: #222;
+    --toolbar-border-color: #3a3a3a;
+    --muted-color: #aaa;
+    --divider-color: #333;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+        color-scheme: dark;
+        --page-bg: #171717;
+        --text-color: #eee;
+        --toolbar-bg: #222;
+        --toolbar-border-color: #3a3a3a;
+        --muted-color: #aaa;
+        --divider-color: #333;
+    }
+}
+
+body {
+    --page-gutter: 16px;
+    --row-space: 12px;
+    margin: 0;
+    background: var(--page-bg);
+    color: var(--text-color);
+    font: 15px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--row-space);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: var(--row-space) var(--page-gutter);
+    background: var(--toolbar-bg);
+    border-bottom: 1px solid var(--toolbar-border-color);
+}
+
+.count {
+    color: var(--muted-color);
+}
+
+.links {
+    padding: 0 var(--page-gutter) var(--page-gutter);
+}
+
+.link-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--row-space);
+    align-items: center;
+    padding: var(--row-space) 0;
+    border-bottom: 1px solid var(--divider-color);
+}
+
+.copy-link,
+.theme-toggle {
+    appearance: none;
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: filter 120ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.copy-link {
+    --copy-bg: #2563eb;
+    border-color: var(--copy-bg);
+    background: var(--copy-bg);
+    color: #fff;
+}
+
+.theme-toggle {
+    flex-shrink: 0;
+    border-color: var(--toolbar-border-color);
+    background: var(--page-bg);
+    color: var(--text-color);
+}
+
+.theme-toggle::before {
+    content: "";
+    box-sizing: border-box;
+    width: 16px;
+    height: 16px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    background: linear-gradient(90deg, currentColor 50%, transparent 50%);
+}
+
+.copy-link::before,
+.copy-link::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    box-sizing: border-box;
+    width: 14px;
+    height: 16px;
+    border: 2px solid currentColor;
+    border-radius: 2px;
+}
+
+.copy-link::before {
+    opacity: 0.7;
+    transform: translate(-9px, -10px);
+}
+
+.copy-link::after {
+    background: var(--copy-bg);
+    transform: translate(-5px, -6px);
+}
+
+.copy-link:active,
+.theme-toggle:active {
+    filter: brightness(0.92);
+}
+
+.copy-link--copied,
+.copy-link--failed {
+    animation: copy-flash 260ms ease-out;
+}
+
+.copy-link--copied::before {
+    width: 8px;
+    height: 14px;
+    border-width: 0 2px 2px 0;
+    border-radius: 0;
+    opacity: 1;
+    transform: translate(-4px, -8px) rotate(45deg);
+}
+
+.copy-link--copied::after {
+    opacity: 0;
+}
+
+.copy-link--failed {
+    --copy-bg: #b91c1c;
+}
+
+@keyframes copy-flash {
+    50% {
+        filter: brightness(1.12);
+    }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .copy-link,
+    .theme-toggle {
+        width: 44px;
+        height: 44px;
+        border-radius: 7px;
+    }
+
+    .copy-link::before,
+    .copy-link::after {
+        width: 17px;
+        height: 20px;
+    }
+
+    .copy-link::before {
+        transform: translate(-11px, -12px);
+    }
+
+    .copy-link::after {
+        transform: translate(-6px, -8px);
+    }
+
+    .copy-link--copied::before {
+        width: 10px;
+        height: 17px;
+        transform: translate(-5px, -10px) rotate(45deg);
+    }
+}
+
+.link-text {
+    min-width: 0;
+}
+
+.link-name {
+    margin-bottom: 4px;
+    font-weight: 700;
+}
+
+.link-text code {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    color: var(--muted-color);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        {{/* 3x-ui exposes links, but no upstream success/total counters. */}}
+        <span class="count">{{ if .links }}{{ len .links }}{{ else }}0{{ end }} links</span>
+        <button class="theme-toggle" type="button" aria-label="Toggle dark theme" aria-pressed="false" title="Toggle dark theme"></button>
+    </div>
+
+    <div class="links" spellcheck="false">
+        {{ range .links }}
+        <div class="link-row"><button class="copy-link" type="button" data-link="{{ . }}" data-label="Copy link" aria-label="Copy link" title="Copy link"></button><div class="link-text"><code title="{{ . }}">{{ . }}</code></div></div>
+        {{ end }}
+    </div>
+    <script>
+(function () {
+    // 3x-ui supplies the URI rows through Go's escaped HTML template. Adapt
+    // sub-merge's server-side name/config handling without fetching any data.
+    function getAmneziaWGConfig(link) {
+        var match = /^vpn:\/\/([A-Za-z0-9_-]+={0,2})(?:#.*)?$/i.exec(link);
+
+        if (!match || match[1].replace(/=+$/, "").length % 4 === 1) {
+            return "";
+        }
+
+        try {
+            var encoded = match[1].replace(/=+$/, "").replace(/-/g, "+").replace(/_/g, "/");
+            while (encoded.length % 4 !== 0) {
+                encoded += "=";
+            }
+
+            var binary = atob(encoded);
+            var bytes = new Uint8Array(binary.length);
+            for (var i = 0; i < binary.length; i += 1) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+
+            // Preserve a UTF-8 BOM, like Buffer.toString("utf8") in sub-merge.
+            var config = new TextDecoder("utf-8", { ignoreBOM: true }).decode(bytes);
+            return /^\[Interface\]\r?$/m.test(config) && /^\[Peer\]\r?$/m.test(config) ? config : "";
+        } catch (error) {
+            return "";
+        }
+    }
+
+    function getLinkName(link, config) {
+        var hash = link.indexOf("#");
+
+        if (hash === -1 || hash === link.length - 1) {
+            var remark = /^#[ \t]*(.*)$/m.exec(config);
+            return (remark && remark[1].trim()) || (config ? "AmneziaWG" : "");
+        }
+
+        var name = link.slice(hash + 1);
+        try {
+            return decodeURIComponent(name);
+        } catch (error) {
+            return name;
+        }
+    }
+
+    var rows = document.querySelectorAll(".link-row");
+    for (var i = 0; i < rows.length; i += 1) {
+        var row = rows[i];
+        var button = row.querySelector(".copy-link");
+        var code = row.querySelector("code");
+        var link = code.textContent;
+        var config = getAmneziaWGConfig(link);
+        var name = getLinkName(link, config);
+
+        if (name !== "") {
+            var label = document.createElement("div");
+            label.className = "link-name";
+            label.textContent = name;
+            code.parentNode.insertBefore(label, code);
+        }
+
+        if (config) {
+            button.setAttribute("data-link", config);
+            button.setAttribute("data-label", "Copy configuration");
+            button.setAttribute("aria-label", "Copy configuration");
+            button.setAttribute("title", "Copy configuration");
+        }
+    }
+})();
+    </script>
+</body>
+</html>
