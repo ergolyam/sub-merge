@@ -322,8 +322,12 @@ body {
 </head>
 <body>
     <div class="toolbar">
-        {{/* 3x-ui exposes links, but no upstream success/total counters. */}}
-        <span class="count">{{ if .links }}{{ len .links }}{{ else }}0{{ end }} links</span>
+        <span class="count">
+            {{ if .links }}{{ len .links }}{{ else }}0{{ end }} links,
+            Used: {{ .used }}, Total: {{ .total }},
+            Days left: <span id="days-left">{{ if gt .expire 0 }}—{{ else }}∞{{ end }}</span>,
+            Expiry: <span id="expiry" data-expire="{{ .expire }}">{{ if gt .expire 0 }}—{{ else }}Never{{ end }}</span>
+        </span>
         <button class="theme-toggle" type="button" aria-label="Toggle dark theme" aria-pressed="false" title="Toggle dark theme"></button>
     </div>
 
@@ -334,6 +338,16 @@ body {
     </div>
     <script>
 (function () {
+    // 3x-ui supplies expiry as Unix seconds, or zero for no expiry.
+    var expiry = document.getElementById("expiry");
+    var expireMs = Number(expiry.getAttribute("data-expire")) * 1000;
+    if (expireMs > 0) {
+        document.getElementById("days-left").textContent = Math.max(0, Math.ceil((expireMs - Date.now()) / 86400000));
+        expiry.textContent = new Date(expireMs).toLocaleDateString("en-GB", {
+            year: "numeric", month: "2-digit", day: "2-digit"
+        });
+    }
+
     // 3x-ui supplies the URI rows through Go's escaped HTML template. Adapt
     // sub-merge's server-side name/config handling without fetching any data.
     function getAmneziaWGConfig(link) {
