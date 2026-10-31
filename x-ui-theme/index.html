@@ -148,9 +148,9 @@ body {
 }
 
 .toolbar {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, max-content) minmax(0, 1fr) auto;
     align-items: center;
-    justify-content: space-between;
     gap: var(--row-space);
     position: sticky;
     top: 0;
@@ -162,6 +162,23 @@ body {
 
 .count {
     color: var(--muted-color);
+}
+
+.toolbar-actions {
+    display: contents;
+}
+
+.toolbar-email {
+    justify-self: end;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.toolbar-actions > .theme-toggle {
+    grid-column: 3;
 }
 
 .links {
@@ -328,7 +345,12 @@ body {
             Days left: <span id="days-left">{{ if gt .expire 0 }}—{{ else }}∞{{ end }}</span>,
             Expiry: <span id="expiry" data-expire="{{ .expire }}">{{ if gt .expire 0 }}—{{ else }}Never{{ end }}</span>
         </span>
-        <button class="theme-toggle" type="button" aria-label="Toggle dark theme" aria-pressed="false" title="Toggle dark theme"></button>
+        <div class="toolbar-actions">
+            {{ $email := "" }}
+            {{ range .emails }}{{ if and . (not $email) }}{{ $email = . }}{{ end }}{{ end }}
+            {{ with $email }}<span class="count toolbar-email" title="{{ . }}">{{ . }}</span>{{ end }}
+            <button class="theme-toggle" type="button" aria-label="Toggle dark theme" aria-pressed="false" title="Toggle dark theme"></button>
+        </div>
     </div>
 
     <div class="links" spellcheck="false">
