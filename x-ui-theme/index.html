@@ -181,6 +181,51 @@ body {
     grid-column: 3;
 }
 
+.toolbar-stat {
+    white-space: nowrap;
+}
+
+.toolbar-link-count::after {
+    content: ",";
+}
+
+@media (max-width: 900px) {
+    .toolbar {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        row-gap: 4px;
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+
+    .toolbar-stats {
+        display: contents;
+    }
+
+    .toolbar-link-count::after {
+        content: none;
+    }
+
+    .toolbar-metrics {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        min-width: 0;
+        overflow-x: auto;
+        white-space: nowrap;
+        font-size: 13px;
+        scrollbar-width: none;
+    }
+
+    .toolbar-email {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .toolbar-actions > .theme-toggle {
+        grid-column: 3;
+        grid-row: 1;
+    }
+}
+
 .links {
     padding: 0 var(--page-gutter) var(--page-gutter);
 }
@@ -339,11 +384,14 @@ body {
 </head>
 <body>
     <div class="toolbar">
-        <span class="count">
-            {{ if .links }}{{ len .links }}{{ else }}0{{ end }} links,
-            Used: {{ .used }}, Total: {{ .total }},
-            Days left: <span id="days-left">{{ if gt .expire 0 }}—{{ else }}∞{{ end }}</span>,
-            Expiry: <span id="expiry" data-expire="{{ .expire }}">{{ if gt .expire 0 }}—{{ else }}Never{{ end }}</span>
+        <span class="count toolbar-stats">
+            <span class="toolbar-link-count">{{ if .links }}{{ len .links }}{{ else }}0{{ end }} links</span>
+            <span class="toolbar-metrics" tabindex="0" role="region" aria-label="Subscription details">
+                <span class="toolbar-stat">Used: {{ .used }},</span>
+                <span class="toolbar-stat">Total: {{ .total }},</span>
+                <span class="toolbar-stat">Days left: <span id="days-left">{{ if gt .expire 0 }}—{{ else }}∞{{ end }}</span>,</span>
+                <span class="toolbar-stat">Expiry: <span id="expiry" data-expire="{{ .expire }}">{{ if gt .expire 0 }}—{{ else }}Never{{ end }}</span></span>
+            </span>
         </span>
         <div class="toolbar-actions">
             {{ $email := "" }}
