@@ -214,7 +214,6 @@ body {
 
 .toolbar--stacked {
     grid-template-columns: auto minmax(max-content, 1fr) auto;
-    column-gap: calc(var(--row-space) / 2);
     row-gap: 4px;
     padding-top: 8px;
     padding-bottom: 8px;
@@ -234,7 +233,6 @@ body {
     min-width: 0;
     overflow-x: auto;
     white-space: nowrap;
-    font-size: 13px;
     scrollbar-width: none;
 }
 
@@ -356,6 +354,14 @@ body {
 }
 
 @media (hover: none) and (pointer: coarse) {
+    .toolbar {
+        column-gap: calc(var(--row-space) / 2);
+    }
+
+    .toolbar-metrics {
+        font-size: 13px;
+    }
+
     .copy-link,
     .theme-toggle {
         width: 44px;
