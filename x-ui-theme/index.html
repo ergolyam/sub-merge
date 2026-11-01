@@ -114,6 +114,9 @@
     --toolbar-border-color: #d8d8d8;
     --muted-color: #555;
     --divider-color: #e1e1e1;
+    --status-online-color: #0958d9;
+    --status-active-color: #237804;
+    --status-ended-color: #cf1322;
 }
 
 :root[data-theme="dark"] {
@@ -124,6 +127,9 @@
     --toolbar-border-color: #3a3a3a;
     --muted-color: #aaa;
     --divider-color: #333;
+    --status-online-color: #69b1ff;
+    --status-active-color: #95de64;
+    --status-ended-color: #ff7875;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -135,6 +141,9 @@
         --toolbar-border-color: #3a3a3a;
         --muted-color: #aaa;
         --divider-color: #333;
+        --status-online-color: #69b1ff;
+        --status-active-color: #95de64;
+        --status-ended-color: #ff7875;
     }
 }
 
@@ -175,6 +184,19 @@ body {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+}
+
+.toolbar-email[data-status="online"] {
+    color: var(--status-online-color);
+}
+
+.toolbar-email[data-status="active"] {
+    color: var(--status-active-color);
+}
+
+.toolbar-email[data-status="expired"],
+.toolbar-email[data-status="depleted"] {
+    color: var(--status-ended-color);
 }
 
 .toolbar-actions > .theme-toggle {
@@ -396,7 +418,7 @@ body {
         <div class="toolbar-actions">
             {{ $email := "" }}
             {{ range .emails }}{{ if and . (not $email) }}{{ $email = . }}{{ end }}{{ end }}
-            {{ with $email }}<span class="count toolbar-email" title="{{ . }}">{{ . }}</span>{{ end }}
+            {{ with $email }}<span class="count toolbar-email">{{ . }}</span>{{ end }}
             <button class="theme-toggle" type="button" aria-label="Toggle dark theme" aria-pressed="false" title="Toggle dark theme"></button>
         </div>
     </div>
@@ -416,6 +438,35 @@ body {
         expiry.textContent = new Date(expireMs).toLocaleDateString("en-GB", {
             year: "numeric", month: "2-digit", day: "2-digit"
         });
+    }
+
+    var email = document.querySelector(".toolbar-email");
+    if (email) {
+        var usedBytes = {{ .uploadByte }} + {{ .downloadByte }};
+        var totalBytes = {{ .totalByte }};
+        var status;
+        // Match the client list: ended subscriptions take priority over disabled
+        // and online. Its configurable warning thresholds are not in this view.
+        if (expireMs > 0 && expireMs <= Date.now()) {
+            status = "expired";
+        } else if (totalBytes > 0 && usedBytes >= totalBytes) {
+            status = "depleted";
+        } else if (!{{ .enabled }}) {
+            status = "disabled";
+        } else if ({{ .isOnline }}) {
+            status = "online";
+        } else {
+            status = "active";
+        }
+
+        email.setAttribute("data-status", status);
+        email.setAttribute("title", {
+            online: "Online",
+            active: "Active",
+            expired: "Expired",
+            depleted: "Depleted",
+            disabled: "Disabled"
+        }[status]);
     }
 
     // 3x-ui supplies the URI rows through Go's escaped HTML template. Adapt
