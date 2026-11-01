@@ -207,7 +207,8 @@ body {
     white-space: nowrap;
 }
 
-.toolbar-link-count::after {
+.toolbar-link-count::after,
+.toolbar-stat:not(:last-child)::after {
     content: ",";
 }
 
@@ -409,10 +410,12 @@ body {
         <span class="count toolbar-stats">
             <span class="toolbar-link-count">{{ if .links }}{{ len .links }}{{ else }}0{{ end }} links</span>
             <span class="toolbar-metrics" tabindex="0" role="region" aria-label="Subscription details">
-                <span class="toolbar-stat">Used: {{ .used }},</span>
-                {{ if gt .totalByte 0 }}<span class="toolbar-stat">Total: {{ .total }},</span>{{ end }}
-                <span class="toolbar-stat">Days left: <span id="days-left">{{ if gt .expire 0 }}—{{ else }}∞{{ end }}</span>,</span>
-                <span class="toolbar-stat">Expiry: <span id="expiry" data-expire="{{ .expire }}">{{ if gt .expire 0 }}—{{ else }}Never{{ end }}</span></span>
+                <span class="toolbar-stat">Used: {{ .used }}</span>
+                {{ if gt .totalByte 0 }}<span class="toolbar-stat">Total: {{ .total }}</span>{{ end }}
+                {{ if gt .expire 0 }}
+                <span class="toolbar-stat">Days left: <span id="days-left">—</span></span>
+                <span class="toolbar-stat">Expiry: <span id="expiry" data-expire="{{ .expire }}">—</span></span>
+                {{ end }}
             </span>
         </span>
         <div class="toolbar-actions">
@@ -432,7 +435,7 @@ body {
 (function () {
     // 3x-ui supplies expiry as Unix seconds, or zero for no expiry.
     var expiry = document.getElementById("expiry");
-    var expireMs = Number(expiry.getAttribute("data-expire")) * 1000;
+    var expireMs = expiry ? Number(expiry.getAttribute("data-expire")) * 1000 : 0;
     if (expireMs > 0) {
         document.getElementById("days-left").textContent = Math.max(0, Math.ceil((expireMs - Date.now()) / 86400000));
         expiry.textContent = new Date(expireMs).toLocaleDateString("en-GB", {
