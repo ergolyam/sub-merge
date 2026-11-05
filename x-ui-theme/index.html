@@ -622,12 +622,19 @@ body {
         var stacked = metrics.getBoundingClientRect().right > stats.getBoundingClientRect().right;
         toolbar.classList.toggle("toolbar--stacked", stacked);
         if (toggleWasFocused && stacked) {
-            detailsToggle.focus();
+            detailsToggle.focus({ preventScroll: true });
         }
     }
 
+    var viewportWidth = document.documentElement.clientWidth;
     updateToolbarLayout();
-    window.addEventListener("resize", updateToolbarLayout);
+    window.addEventListener("resize", function () {
+        var width = document.documentElement.clientWidth;
+        if (width !== viewportWidth) {
+            viewportWidth = width;
+            updateToolbarLayout();
+        }
+    });
     if (document.fonts) {
         document.fonts.ready.then(updateToolbarLayout);
     }
