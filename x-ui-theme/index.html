@@ -3,7 +3,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Subscription</title>
+    {{ $email := "" }}
+    {{ range .emails }}{{ if and . (not $email) }}{{ $email = . }}{{ end }}{{ end }}
+    <title>{{ if $email }}{{ $email }}{{ else }}Subscription{{ end }}</title>
     {{/* Original sub-merge client.js, d8266a5; inlined because 3x-ui does not
          serve files from Sub Theme Directory. Keep this before the stylesheet. */}}
     <script>
@@ -181,25 +183,24 @@ body {
     display: contents;
 }
 
-.toolbar-email {
+.toolbar-status {
     justify-self: end;
     min-width: 0;
     max-width: 100%;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    text-align: right;
+    overflow-wrap: anywhere;
 }
 
-.toolbar-email[data-status="online"] {
+.toolbar-status[data-status="online"] {
     color: var(--status-online-color);
 }
 
-.toolbar-email[data-status="active"] {
+.toolbar-status[data-status="active"] {
     color: var(--status-active-color);
 }
 
-.toolbar-email[data-status="expired"],
-.toolbar-email[data-status="depleted"] {
+.toolbar-status[data-status="expired"],
+.toolbar-status[data-status="depleted"] {
     color: var(--status-ended-color);
 }
 
@@ -285,14 +286,9 @@ body {
     content: none;
 }
 
-.toolbar--stacked .toolbar-email {
+.toolbar--stacked .toolbar-status {
     grid-column: 2;
     grid-row: 1;
-}
-
-.toolbar--stacked.toolbar--details-open .toolbar-email {
-    white-space: normal;
-    overflow-wrap: anywhere;
 }
 
 .toolbar--stacked .toolbar-actions > .theme-toggle {
@@ -479,9 +475,7 @@ body {
             </span>
         </span>
         <div class="toolbar-actions">
-            {{ $email := "" }}
-            {{ range .emails }}{{ if and . (not $email) }}{{ $email = . }}{{ end }}{{ end }}
-            {{ with $email }}<span class="count toolbar-email">{{ . }}</span>{{ end }}
+            <span class="count toolbar-status"></span>
             <button class="theme-toggle" type="button" aria-label="Toggle dark theme" aria-pressed="false" title="Toggle dark theme"></button>
         </div>
     </div>
@@ -503,34 +497,32 @@ body {
         });
     }
 
-    var email = document.querySelector(".toolbar-email");
-    if (email) {
-        var usedBytes = {{ .uploadByte }} + {{ .downloadByte }};
-        var totalBytes = {{ .totalByte }};
-        var status;
-        // Match the client list: ended subscriptions take priority over disabled
-        // and online. Its configurable warning thresholds are not in this view.
-        if (expireMs > 0 && expireMs <= Date.now()) {
-            status = "expired";
-        } else if (totalBytes > 0 && usedBytes >= totalBytes) {
-            status = "depleted";
-        } else if (!{{ .enabled }}) {
-            status = "disabled";
-        } else if ({{ .isOnline }}) {
-            status = "online";
-        } else {
-            status = "active";
-        }
-
-        email.setAttribute("data-status", status);
-        email.setAttribute("title", email.textContent + " — " + {
-            online: "Online",
-            active: "Active",
-            expired: "Expired",
-            depleted: "Depleted",
-            disabled: "Disabled"
-        }[status]);
+    var statusElement = document.querySelector(".toolbar-status");
+    var usedBytes = {{ .uploadByte }} + {{ .downloadByte }};
+    var totalBytes = {{ .totalByte }};
+    var status;
+    // Match the client list: ended subscriptions take priority over disabled
+    // and online. Its configurable warning thresholds are not in this view.
+    if (expireMs > 0 && expireMs <= Date.now()) {
+        status = "expired";
+    } else if (totalBytes > 0 && usedBytes >= totalBytes) {
+        status = "depleted";
+    } else if (!{{ .enabled }}) {
+        status = "disabled";
+    } else if ({{ .isOnline }}) {
+        status = "online";
+    } else {
+        status = "active";
     }
+
+    statusElement.setAttribute("data-status", status);
+    statusElement.textContent = {
+        online: "Online",
+        active: "Active",
+        expired: "Expired",
+        depleted: "Depleted",
+        disabled: "Disabled"
+    }[status];
 
     // 3x-ui supplies the URI rows through Go's escaped HTML template. Adapt
     // sub-merge's server-side name/config handling without fetching any data.
