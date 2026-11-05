@@ -158,7 +158,7 @@ body {
 
 .toolbar {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) max-content auto;
+    grid-template-columns: minmax(0, 1fr) minmax(0, max-content) auto;
     align-items: center;
     gap: var(--row-space);
     position: sticky;
@@ -183,7 +183,11 @@ body {
 
 .toolbar-email {
     justify-self: end;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
     white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .toolbar-email[data-status="online"] {
@@ -212,8 +216,12 @@ body {
     content: ",";
 }
 
+.toolbar-details-toggle {
+    display: none;
+}
+
 .toolbar--stacked {
-    grid-template-columns: auto minmax(max-content, 1fr) auto;
+    grid-template-columns: minmax(0, max-content) minmax(0, 1fr) auto;
     row-gap: 4px;
     padding-top: 8px;
     padding-bottom: 8px;
@@ -223,22 +231,68 @@ body {
     display: contents;
 }
 
+.toolbar--stacked .toolbar-summary {
+    min-width: 0;
+    white-space: normal;
+}
+
 .toolbar--stacked .toolbar-link-count::after {
     content: none;
 }
 
+.toolbar--stacked .toolbar-details-toggle {
+    display: inline-block;
+    min-height: 36px;
+    margin-left: 4px;
+    padding: 0 8px;
+    border: 1px solid var(--toolbar-border-color);
+    border-radius: 6px;
+    background: var(--page-bg);
+    color: var(--text-color);
+    font: inherit;
+    cursor: pointer;
+}
+
+.toolbar--stacked .toolbar-details-toggle::after {
+    content: " ▾";
+}
+
+.toolbar--stacked .toolbar-details-toggle[aria-expanded="true"]::after {
+    content: " ▴";
+}
+
 .toolbar--stacked .toolbar-metrics {
+    display: none;
     grid-column: 1 / -1;
     grid-row: 2;
     min-width: 0;
-    overflow-x: auto;
-    white-space: nowrap;
-    scrollbar-width: none;
+    padding-bottom: 4px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.toolbar--stacked.toolbar--details-open .toolbar-metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+}
+
+.toolbar--stacked .toolbar-stat {
+    white-space: normal;
+}
+
+.toolbar--stacked .toolbar-stat::after {
+    content: none;
 }
 
 .toolbar--stacked .toolbar-email {
     grid-column: 2;
     grid-row: 1;
+}
+
+.toolbar--stacked.toolbar--details-open .toolbar-email {
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 .toolbar--stacked .toolbar-actions > .theme-toggle {
@@ -362,6 +416,10 @@ body {
         font-size: 13px;
     }
 
+    .toolbar--stacked .toolbar-details-toggle {
+        min-height: 44px;
+    }
+
     .copy-link,
     .theme-toggle {
         width: 44px;
@@ -413,8 +471,9 @@ body {
 <body>
     <div class="toolbar">
         <span class="count toolbar-stats">
-            <span class="toolbar-link-count">{{ if .links }}{{ len .links }}{{ else }}0{{ end }} links</span>
-            <span class="toolbar-metrics" tabindex="0" role="region" aria-label="Subscription details">
+            <span class="toolbar-summary"><span class="toolbar-link-count">{{ if .links }}{{ len .links }}{{ else }}0{{ end }} links</span>
+            <button class="toolbar-details-toggle" type="button" aria-expanded="false" aria-controls="subscription-details">Details</button></span>
+            <span class="toolbar-metrics" id="subscription-details">
                 <span class="toolbar-stat">Used: {{ .used }}</span>
                 {{ if gt .totalByte 0 }}<span class="toolbar-stat">Total: {{ .total }}</span>{{ end }}
                 {{ if gt .expire 0 }}
@@ -468,7 +527,7 @@ body {
         }
 
         email.setAttribute("data-status", status);
-        email.setAttribute("title", {
+        email.setAttribute("title", email.textContent + " — " + {
             online: "Online",
             active: "Active",
             expired: "Expired",
@@ -549,11 +608,22 @@ body {
     var toolbar = document.querySelector(".toolbar");
     var stats = toolbar.querySelector(".toolbar-stats");
     var metrics = toolbar.querySelector(".toolbar-metrics");
+    var detailsToggle = toolbar.querySelector(".toolbar-details-toggle");
+    detailsToggle.addEventListener("click", function () {
+        var expanded = detailsToggle.getAttribute("aria-expanded") === "true";
+        detailsToggle.setAttribute("aria-expanded", String(!expanded));
+        toolbar.classList.toggle("toolbar--details-open", !expanded);
+    });
+
     function updateToolbarLayout() {
         // Measure the actual text against its available single-row space.
+        var toggleWasFocused = document.activeElement === detailsToggle;
         toolbar.classList.remove("toolbar--stacked");
-        toolbar.classList.toggle("toolbar--stacked",
-            metrics.getBoundingClientRect().right > stats.getBoundingClientRect().right);
+        var stacked = metrics.getBoundingClientRect().right > stats.getBoundingClientRect().right;
+        toolbar.classList.toggle("toolbar--stacked", stacked);
+        if (toggleWasFocused && stacked) {
+            detailsToggle.focus();
+        }
     }
 
     updateToolbarLayout();
